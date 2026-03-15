@@ -5,11 +5,47 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SERVER_IP="${OCR_SERVER_HOST:-YOUR_SERVER_IP}"
+CONFIG_FILE="$SCRIPT_DIR/.server_ip"
 
 echo "========================================="
 echo " OCR vLLM Services - Setup"
 echo "========================================="
+echo ""
+
+# ─── Step 0: Detect and confirm server IP ────────────────────────────────────
+
+# Try to auto-detect IP (VPN first, then LAN)
+DETECTED_IP=""
+if command -v tailscale &>/dev/null; then
+    DETECTED_IP=$(tailscale ip -4 2>/dev/null || true)
+fi
+if [ -z "$DETECTED_IP" ]; then
+    DETECTED_IP=$(hostname -I 2>/dev/null | awk '{print $1}' || true)
+fi
+
+# Check env var override or saved config
+if [ -n "${OCR_SERVER_HOST:-}" ]; then
+    SERVER_IP="$OCR_SERVER_HOST"
+elif [ -f "$CONFIG_FILE" ]; then
+    SERVER_IP=$(cat "$CONFIG_FILE")
+else
+    SERVER_IP="$DETECTED_IP"
+fi
+
+echo "Server IP Configuration"
+echo "  Detected IP: ${DETECTED_IP:-unknown}"
+if [ -n "${OCR_SERVER_HOST:-}" ]; then
+    echo "  OCR_SERVER_HOST env: $OCR_SERVER_HOST"
+fi
+echo ""
+read -rp "  Use IP [$SERVER_IP]: " USER_IP
+if [ -n "$USER_IP" ]; then
+    SERVER_IP="$USER_IP"
+fi
+
+# Save for future runs
+echo "$SERVER_IP" > "$CONFIG_FILE"
+echo "  Saved: $SERVER_IP"
 echo ""
 
 # Make sure conda is available
@@ -131,7 +167,7 @@ echo ""
 echo "To stop all OCR services:"
 echo "  $SCRIPT_DIR/stop_ocr_services.sh"
 echo ""
-echo "Remote clients can connect via VPN:"
+echo "Remote access (server IP: $SERVER_IP):"
 echo "  PaddleOCR-VL:   http://$SERVER_IP:8004"
 echo "  HunyuanOCR:     http://$SERVER_IP:8002"
 echo "  DeepSeek-OCR-2: http://$SERVER_IP:8003"
