@@ -1,0 +1,24 @@
+# Base dependencies (required for all engines)
+PyMuPDF>=1.24.0
+Pillow>=10.0.0
+numpy>=1.24.0
+
+# Shared ML dependencies
+transformers>=4.40.0
+sentencepiece
+
+# --- Engine: PaddleOCR-VL (CPU/GPU) ---
+# GPU: pip install paddlepaddle-gpu==3.2.1 -i https://www.paddlepaddle.org.cn/packages/stable/cu126/
+# CPU: pip install paddlepaddle==3.2.1
+# Then: pip install -U "paddleocr[doc-parser]"
+
+# --- Engine: TrOCR (CPU/GPU) ---
+# GPU: pip install torch torchvision
+# CPU: pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+
+# --- Engine: HunyuanOCR (GPU only, ~20GB VRAM) ---
+# pip install "vllm>=0.12.0"
+
+# --- Engine: DeepSeek-OCR-2 (GPU recommended, ~16GB VRAM) ---
+# pip install flash-attn --no-build-isolation  # optional, for GPU acceleration
+# Model: deepseek-ai/DeepSeek-OCR-2 (auto-downloaded on first run)
