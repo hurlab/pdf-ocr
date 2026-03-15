@@ -2,7 +2,7 @@
 # Run OCR on all input PDFs using all remote vLLM engines on DGX Spark.
 # Output: output/APUSH_paddleocr.pdf, output/APUSH_hunyuan.pdf, etc.
 
-DGX="http://100.67.76.96"
+DGX="http://${DGX_HOST:-YOUR_SERVER_IP}"
 DPI=300
 INPUT="input"
 OUTPUT="output"

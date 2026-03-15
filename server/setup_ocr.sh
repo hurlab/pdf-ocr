@@ -5,7 +5,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TAILSCALE_IP="100.67.76.96"
+TAILSCALE_IP="${DGX_HOST:-YOUR_SERVER_IP}"
 
 echo "========================================="
 echo " OCR vLLM Services - Setup"

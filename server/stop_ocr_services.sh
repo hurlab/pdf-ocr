@@ -1,7 +1,8 @@
 #!/bin/bash
 # Stop vLLM OCR model servers
 
-PID_DIR="/home/juhur/PROJECTS/OCR/pids"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PID_DIR="$SCRIPT_DIR/pids"
 
 stop_service() {
     local name="$1"

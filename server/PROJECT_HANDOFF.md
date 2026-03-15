@@ -2,7 +2,7 @@
 
 ## 1. Project Overview
 
-OCR model serving infrastructure on NVIDIA DGX Spark (GB10 Blackwell, 128GB unified memory). Three OCR vision-language models are served via OpenAI-compatible APIs, accessible remotely over Tailscale (IP: 100.67.76.96) by other machines running `ocr_processor.py`.
+OCR model serving infrastructure on NVIDIA DGX Spark (GB10 Blackwell, 128GB unified memory). Three OCR vision-language models are served via OpenAI-compatible APIs, accessible remotely over Tailscale (IP: YOUR_SERVER_IP) by other machines running `ocr_processor.py`.
 
 - **Last updated:** 2026-03-15 10:41 CDT
 - **Last coding CLI used:** Claude Code CLI (claude-opus-4-6)
@@ -66,15 +66,15 @@ OCR model serving infrastructure on NVIDIA DGX Spark (GB10 Blackwell, 128GB unif
 
 **Recommended next actions:**
 1. Test actual image OCR inference on each model (send a base64 image to `/v1/chat/completions`)
-2. Test remote access from the other machine via `ocr_processor.py --server http://100.67.76.96:<port>`
+2. Test remote access from the other machine via `ocr_processor.py --server http://YOUR_SERVER_IP:<port>`
 3. Verify `deepseek_server.py`'s `/v1/chat/completions` endpoint handles image payloads correctly — the `model.infer()` API may differ from what the client expects
 4. Optionally investigate what's on port 8001
 5. Optionally set up systemd services for autostart on boot
 
 **Key files:**
-- `/home/juhur/PROJECTS/OCR/setup_ocr.sh` — one-time setup
-- `/home/juhur/PROJECTS/OCR/start_ocr_services.sh` — start all services
-- `/home/juhur/PROJECTS/OCR/stop_ocr_services.sh` — stop all services
-- `/home/juhur/PROJECTS/OCR/deepseek_server.py` — DeepSeek FastAPI server
+- `server/setup_ocr.sh` — one-time setup
+- `server/start_ocr_services.sh` — start all services
+- `server/stop_ocr_services.sh` — stop all services
+- `server/deepseek_server.py` — DeepSeek FastAPI server
 
 - **Last updated:** 2026-03-15 10:41 CDT

@@ -5,8 +5,8 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LOG_DIR="/home/juhur/PROJECTS/OCR/logs"
-PID_DIR="/home/juhur/PROJECTS/OCR/pids"
+LOG_DIR="$SCRIPT_DIR/logs"
+PID_DIR="$SCRIPT_DIR/pids"
 mkdir -p "$LOG_DIR" "$PID_DIR"
 
 # Activate conda environment
@@ -73,6 +73,6 @@ echo "  HunyuanOCR:     http://0.0.0.0:8002"
 echo "  DeepSeek-OCR-2: http://0.0.0.0:8003"
 echo ""
 echo "Remote access (Tailscale):"
-echo "  PaddleOCR-VL:   http://100.67.76.96:8004"
-echo "  HunyuanOCR:     http://100.67.76.96:8002"
-echo "  DeepSeek-OCR-2: http://100.67.76.96:8003"
+echo "  PaddleOCR-VL:   http://YOUR_SERVER_IP:8004"
+echo "  HunyuanOCR:     http://YOUR_SERVER_IP:8002"
+echo "  DeepSeek-OCR-2: http://YOUR_SERVER_IP:8003"
