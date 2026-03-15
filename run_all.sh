@@ -39,6 +39,15 @@ for entry in "${ENGINES[@]}"; do
   echo ""
 done
 
+# Local TrOCR (CPU, line-level OCR)
+echo "--- [trocr] local CPU ---"
+python ocr_processor.py \
+  --engine trocr \
+  --input "$INPUT" \
+  --output "$OUTPUT" \
+  --dpi "$DPI"
+echo ""
+
 echo "=== Done ==="
 echo "Output files:"
 ls -lh "$OUTPUT"/*.pdf 2>/dev/null
