@@ -5,7 +5,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SERVER_IP="YOUR_SERVER_IP"
+SERVER_IP="${OCR_SERVER_HOST:-YOUR_SERVER_IP}"
 
 echo "========================================="
 echo " OCR vLLM Services - Setup"

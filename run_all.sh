@@ -2,7 +2,7 @@
 # Run OCR on all input PDFs using all remote vLLM engines on GPU server.
 # Output: output/document_paddleocr.pdf, output/document_hunyuan.pdf, etc.
 
-DGX="http://YOUR_SERVER_IP"
+DGX="http://${OCR_SERVER_HOST:-YOUR_SERVER_IP}"
 DPI=300
 INPUT="input"
 OUTPUT="output"

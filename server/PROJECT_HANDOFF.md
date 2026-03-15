@@ -72,9 +72,9 @@ OCR model serving infrastructure on NVIDIA GPU server (GB10 Blackwell, 128GB uni
 5. Optionally set up systemd services for autostart on boot
 
 **Key files:**
-- `$SCRIPT_DIR/setup_ocr.sh` — one-time setup
-- `$SCRIPT_DIR/start_ocr_services.sh` — start all services
-- `$SCRIPT_DIR/stop_ocr_services.sh` — stop all services
-- `$SCRIPT_DIR/deepseek_server.py` — DeepSeek FastAPI server
+- `server/setup_ocr.sh` — one-time setup
+- `server/start_ocr_services.sh` — start all services
+- `server/stop_ocr_services.sh` — stop all services
+- `server/deepseek_server.py` — DeepSeek FastAPI server
 
 - **Last updated:** 2026-03-15 10:41 CDT
