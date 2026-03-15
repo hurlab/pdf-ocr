@@ -67,12 +67,17 @@ echo "  tail -f $LOG_DIR/paddleocr.log"
 echo "  tail -f $LOG_DIR/hunyuan.log"
 echo "  tail -f $LOG_DIR/deepseek.log"
 echo ""
+# Read saved server IP
+SERVER_IP="YOUR_SERVER_IP"
+if [ -f "$SCRIPT_DIR/.server_ip" ]; then
+    SERVER_IP=$(cat "$SCRIPT_DIR/.server_ip")
+fi
+
 echo "Services will be available at:"
-echo "  PaddleOCR-VL:   http://0.0.0.0:8004"
-echo "  HunyuanOCR:     http://0.0.0.0:8002"
-echo "  DeepSeek-OCR-2: http://0.0.0.0:8003"
-echo ""
-echo "Remote access (Tailscale):"
-echo "  PaddleOCR-VL:   http://YOUR_SERVER_IP:8004"
-echo "  HunyuanOCR:     http://YOUR_SERVER_IP:8002"
-echo "  DeepSeek-OCR-2: http://YOUR_SERVER_IP:8003"
+echo "  ┌────────────────┬──────────────────────────┐"
+echo "  │ PaddleOCR-VL   │ http://$SERVER_IP:8004 │"
+echo "  ├────────────────┼──────────────────────────┤"
+echo "  │ HunyuanOCR     │ http://$SERVER_IP:8002 │"
+echo "  ├────────────────┼──────────────────────────┤"
+echo "  │ DeepSeek-OCR-2 │ http://$SERVER_IP:8003 │"
+echo "  └────────────────┴──────────────────────────┘"

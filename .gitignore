@@ -10,6 +10,7 @@ output/
 test_input/
 server/logs/
 server/pids/
+server/.server_ip
 
 # MoAI/Claude Code internals (not part of the project)
 .claude/
