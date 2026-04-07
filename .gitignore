@@ -1,22 +1,10 @@
 # ============================================
-# pdf-ocr .gitignore
+# MoAI-ADK Package Distribution .gitignore
 # ============================================
-
-# ===========================================
-# Project-specific
-# ===========================================
-input/
-output/
-test_input/
-server/logs/
-server/pids/
-server/.server_ip
-
-# MoAI/Claude Code internals (not part of the project)
-.claude/
-.moai/
-.mcp.json
-CLAUDE.md
+# Version: 0.33.0
+# Updated: 2026-01-10
+# Purpose: Essential patterns for user projects
+# ============================================
 
 # ===========================================
 # Go Build Artifacts
@@ -216,3 +204,18 @@ dist-ssr/
 .vercel/
 .netlify/
 .firebase/
+
+# User Custom Patterns (preserved by moai update)
+input/
+output/
+test_input/
+server/logs/
+server/pids/
+server/.server_ip
+.claude/
+.moai/
+.agency/
+.mcp.json
+CLAUDE.md
+PROJECT_HANDOFF.md
+PROJECT_LOG.md

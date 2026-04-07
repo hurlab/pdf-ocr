@@ -1,6 +1,6 @@
 #!/bin/bash
 # Run TrOCR (local CPU) on all input PDFs.
-# Output: output/document_trocr.pdf
+# Output: output/<filename>_trocr.pdf
 
 eval "$($HOME/miniconda3/bin/conda shell.bash hook)"
 conda activate ocr

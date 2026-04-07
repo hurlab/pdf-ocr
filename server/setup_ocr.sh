@@ -1,5 +1,5 @@
 #!/bin/bash
-# Setup script for OCR vLLM services on GPU server
+# Setup script for OCR vLLM services on a GPU server
 # Creates conda environments, installs dependencies, and downloads models
 
 set -e

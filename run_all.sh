@@ -1,16 +1,16 @@
 #!/bin/bash
-# Run OCR on all input PDFs using all remote vLLM engines on GPU server.
-# Output: output/document_paddleocr.pdf, output/document_hunyuan.pdf, etc.
+# Run OCR on all input PDFs using all remote vLLM engines.
+# Output: output/<filename>_paddleocr.pdf, output/<filename>_hunyuan.pdf, etc.
 
-DGX="http://${OCR_SERVER_HOST:-YOUR_SERVER_IP}"
+SERVER_URL="http://${OCR_SERVER_HOST:-YOUR_SERVER_IP}"
 DPI=300
 INPUT="input"
 OUTPUT="output"
 
 ENGINES=(
-  "paddleocr ${DGX}:8004"
-  "hunyuan   ${DGX}:8002"
-  "deepseek  ${DGX}:8003"
+  "paddleocr ${SERVER_URL}:8004"
+  "hunyuan   ${SERVER_URL}:8002"
+  "deepseek  ${SERVER_URL}:8003"
 )
 
 # Activate conda environment

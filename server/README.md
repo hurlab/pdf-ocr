@@ -1,6 +1,6 @@
 # OCR Server Setup
 
-Serves three OCR vision-language models via OpenAI-compatible APIs on a GPU server. Tested on NVIDIA GPU server (GB10 Blackwell, 128GB unified memory).
+Serves three OCR vision-language models via OpenAI-compatible APIs on a GPU server.
 
 ## Requirements
 
@@ -15,7 +15,7 @@ Serves three OCR vision-language models via OpenAI-compatible APIs on a GPU serv
 ```
 
 This script:
-1. Auto-detects your server IP (VPN/LAN) and prompts for confirmation
+1. Auto-detects your server IP and prompts for confirmation
 2. Creates conda env `ocr` with vLLM + PyTorch CUDA
 3. Creates conda env `ocr-deepseek` with transformers + FastAPI
 4. Downloads all three models from Hugging Face (~10 GB total)

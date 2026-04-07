@@ -56,7 +56,7 @@ python ocr_processor.py --engine hunyuan --server http://your-gpu-server:8002 --
 
 ## Server Setup (GPU Machine)
 
-See [server/README.md](server/README.md) for setting up vLLM OCR servers on a GPU machine (tested on NVIDIA GPU server with 128GB unified memory).
+See [server/README.md](server/README.md) for setting up vLLM OCR servers on a GPU machine.
 
 ```bash
 cd server

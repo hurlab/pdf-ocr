@@ -1,5 +1,5 @@
 #!/bin/bash
-# Start vLLM OCR model servers on GPU server
+# Start vLLM OCR model servers
 # Models are served on ports 8002-8004 with OpenAI-compatible API
 
 set -e

@@ -17,7 +17,7 @@ Remote mode (--server):
 
 Usage:
     python ocr_processor.py --engine paddleocr
-    python ocr_processor.py --engine paddleocr --server http://dgx:8001
+    python ocr_processor.py --engine paddleocr --server http://gpu-server:8001
     python ocr_processor.py --engine all --input ./input --output ./output
 """
 
@@ -764,10 +764,10 @@ Remote mode (--server):
 
 Examples:
   %(prog)s --engine paddleocr
-  %(prog)s --engine paddleocr --server http://dgx:8001
+  %(prog)s --engine paddleocr --server http://gpu-server:8001
   %(prog)s --engine all                    # compare all engines
-  %(prog)s --pages 55 --server http://dgx:8001  # reprocess page 55
-  %(prog)s --pages 10-20,55  --server http://dgx:8001
+  %(prog)s --pages 55 --server http://gpu-server:8001  # reprocess page 55
+  %(prog)s --pages 10-20,55  --server http://gpu-server:8001
 """,
     )
     parser.add_argument(
@@ -804,7 +804,7 @@ Examples:
         "--server",
         type=str,
         default=None,
-        help="vLLM server URL for remote OCR (e.g., http://dgx:8001)",
+        help="vLLM server URL for remote OCR (e.g., http://gpu-server:8001)",
     )
     parser.add_argument(
         "-v",
@@ -821,8 +821,8 @@ Examples:
         logger.error(
             "--server cannot be used with --engine all.\n"
             "Run separately per engine:\n"
-            f"  {sys.argv[0]} --engine paddleocr --server http://dgx:8001\n"
-            f"  {sys.argv[0]} --engine hunyuan   --server http://dgx:8002"
+            f"  {sys.argv[0]} --engine paddleocr --server http://gpu-server:8001\n"
+            f"  {sys.argv[0]} --engine hunyuan   --server http://gpu-server:8002"
         )
         sys.exit(1)
 
