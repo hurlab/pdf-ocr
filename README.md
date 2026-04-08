@@ -1,5 +1,7 @@
 # pdf-ocr
 
+> **Note:** This repository is no longer actively maintained or updated.
+
 Make scanned PDFs searchable using open-weight OCR vision-language models.
 
 Processes PDF files from an input directory, runs OCR to extract text, and produces searchable PDFs with an invisible text layer (Ctrl+F works) in the output directory.
