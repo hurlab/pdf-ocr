@@ -21,6 +21,8 @@ Usage:
     python ocr_processor.py --engine all --input ./input --output ./output
 """
 
+from __future__ import annotations
+
 import argparse
 import io
 import logging
@@ -28,8 +30,27 @@ import sys
 import tempfile
 from abc import ABC, abstractmethod
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import fitz
+    import numpy as np
+    import PIL.Image
 
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Constants
+# ---------------------------------------------------------------------------
+INVISIBLE_TEXT_FONTSIZE = 3
+INVISIBLE_TEXT_FONTSIZE_FALLBACK = 1
+INVISIBLE_TEXT_FONTNAME = "helv"
+INVISIBLE_TEXT_RENDER_MODE = 3  # invisible: no fill, no stroke
+TEXT_LINE_MIN_HEIGHT = 15  # minimum pixel height for TrOCR line detection
+BINARY_THRESHOLD = 180  # grayscale to binary threshold for line detection
+DEFAULT_DPI = 300
+DEFAULT_MAX_TOKENS = 16384
+TROCR_MAX_NEW_TOKENS = 256
 
 
 def setup_logging(verbose: bool = False):
@@ -44,6 +65,7 @@ def setup_logging(verbose: bool = False):
 # ---------------------------------------------------------------------------
 # Base Engine
 # ---------------------------------------------------------------------------
+
 
 class BaseOCREngine(ABC):
     """Abstract base class for OCR engines."""
@@ -70,6 +92,7 @@ class BaseOCREngine(ABC):
 # ---------------------------------------------------------------------------
 # PaddleOCR-VL Engine
 # ---------------------------------------------------------------------------
+
 
 class PaddleOCREngine(BaseOCREngine):
     """PaddleOCR engine with automatic GPU/CPU selection.
@@ -135,7 +158,7 @@ class PaddleOCREngine(BaseOCREngine):
             logger.info("  Falling back to page-by-page image OCR...")
             return None
 
-    def _ocr_image_vl(self, img_array) -> str:
+    def _ocr_image_vl(self, img_array: "np.ndarray") -> str:
         output = self._pipeline.predict(img_array)
         texts = []
         for res in output:
@@ -144,7 +167,7 @@ class PaddleOCREngine(BaseOCREngine):
                 texts.append(text)
         return "\n".join(texts)
 
-    def _ocr_image_classic(self, img_array) -> str:
+    def _ocr_image_classic(self, img_array: "np.ndarray") -> str:
         result = self._classic_ocr.predict(img_array)
         if not result:
             return ""
@@ -161,7 +184,7 @@ class PaddleOCREngine(BaseOCREngine):
                         lines.append(text)
         return "\n".join(lines)
 
-    def _extract_text_vl(self, res) -> str:
+    def _extract_text_vl(self, res: object) -> str:
         try:
             with tempfile.TemporaryDirectory() as tmpdir:
                 res.save_to_markdown(save_path=tmpdir)
@@ -187,13 +210,14 @@ class PaddleOCREngine(BaseOCREngine):
 # HunyuanOCR Engine
 # ---------------------------------------------------------------------------
 
+
 class HunyuanOCREngine(BaseOCREngine):
     """HunyuanOCR engine (1B params, 100+ languages, requires GPU + vLLM)."""
 
     def __init__(self):
         try:
-            from vllm import LLM, SamplingParams
             from transformers import AutoProcessor
+            from vllm import LLM, SamplingParams
         except ImportError:
             logger.error(
                 "HunyuanOCR dependencies not installed. Install with:\n"
@@ -206,7 +230,7 @@ class HunyuanOCREngine(BaseOCREngine):
         logger.info("Loading HunyuanOCR model (this may take a while)...")
         self.llm = LLM(model=model_path, trust_remote_code=True)
         self.processor = AutoProcessor.from_pretrained(model_path)
-        self.sampling_params = SamplingParams(temperature=0, max_tokens=16384)
+        self.sampling_params = SamplingParams(temperature=0, max_tokens=DEFAULT_MAX_TOKENS)
 
     @property
     def engine_name(self) -> str:
@@ -259,6 +283,7 @@ class HunyuanOCREngine(BaseOCREngine):
 # ---------------------------------------------------------------------------
 # TrOCR Engine (Microsoft)
 # ---------------------------------------------------------------------------
+
 
 class TrOCREngine(BaseOCREngine):
     """Microsoft TrOCR engine (334M params, line-level OCR, CPU/GPU).
@@ -316,19 +341,19 @@ class TrOCREngine(BaseOCREngine):
         """Recognize text from a single line image."""
         import torch
 
-        pixel_values = self.processor(
-            images=line_image, return_tensors="pt"
-        ).pixel_values.to(self.device)
+        pixel_values = self.processor(images=line_image, return_tensors="pt").pixel_values.to(
+            self.device
+        )
 
         with torch.no_grad():
-            generated_ids = self.model.generate(pixel_values, max_new_tokens=256)
+            generated_ids = self.model.generate(pixel_values, max_new_tokens=TROCR_MAX_NEW_TOKENS)
 
         text = self.processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
         return text
 
     @staticmethod
     def _detect_text_lines(
-        image: "PIL.Image.Image", min_height: int = 15
+        image: "PIL.Image.Image", min_height: int = TEXT_LINE_MIN_HEIGHT
     ) -> list["PIL.Image.Image"]:
         """Split a page image into text line crops using horizontal projection."""
         import numpy as np
@@ -336,7 +361,7 @@ class TrOCREngine(BaseOCREngine):
         gray = image.convert("L")
         arr = np.array(gray)
         # Binarize: dark pixels on light background
-        binary = (arr < 180).astype(np.uint8)
+        binary = (arr < BINARY_THRESHOLD).astype(np.uint8)
 
         # Horizontal projection profile
         projection = binary.sum(axis=1)
@@ -366,6 +391,7 @@ class TrOCREngine(BaseOCREngine):
 # DeepSeek-OCR Engine
 # ---------------------------------------------------------------------------
 
+
 class DeepSeekOCREngine(BaseOCREngine):
     """DeepSeek-OCR-2 engine (3B params, document-level VLM, requires GPU).
 
@@ -375,8 +401,8 @@ class DeepSeekOCREngine(BaseOCREngine):
 
     def __init__(self, model_name: str = "deepseek-ai/DeepSeek-OCR-2"):
         try:
-            from transformers import AutoModel, AutoTokenizer
             import torch
+            from transformers import AutoModel, AutoTokenizer
         except ImportError:
             logger.error(
                 "DeepSeek-OCR dependencies not installed. Install with:\n"
@@ -389,9 +415,7 @@ class DeepSeekOCREngine(BaseOCREngine):
 
         logger.info(f"Loading DeepSeek-OCR model: {model_name}...")
 
-        self.tokenizer = AutoTokenizer.from_pretrained(
-            model_name, trust_remote_code=True
-        )
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
 
         # Try flash_attention_2 first (GPU), fall back to eager (CPU)
         attn_impl = "eager"
@@ -462,9 +486,7 @@ class DeepSeekOCREngine(BaseOCREngine):
         inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
 
         with torch.no_grad():
-            output_ids = self.model.generate(
-                **inputs, max_new_tokens=8192, do_sample=False
-            )
+            output_ids = self.model.generate(**inputs, max_new_tokens=8192, do_sample=False)
 
         text = self.tokenizer.decode(output_ids[0], skip_special_tokens=True)
         # Remove the prompt from the output
@@ -517,9 +539,7 @@ class VLLMApiEngine(BaseOCREngine):
             else:
                 raise RuntimeError("No models found on server")
         except Exception as e:
-            raise RuntimeError(
-                f"Cannot connect to vLLM server at {self.server_url}: {e}"
-            )
+            raise RuntimeError(f"Cannot connect to vLLM server at {self.server_url}: {e}")
 
     @property
     def engine_name(self) -> str:
@@ -549,7 +569,7 @@ class VLLMApiEngine(BaseOCREngine):
                     ],
                 }
             ],
-            "max_tokens": 16384,
+            "max_tokens": DEFAULT_MAX_TOKENS,
             "temperature": 0,
         }
 
@@ -579,13 +599,12 @@ def create_engine(engine_name: str) -> BaseOCREngine | None:
     """Create an engine instance. Returns None if initialization fails."""
     if engine_name not in ENGINE_REGISTRY:
         logger.error(
-            f"Unknown engine: {engine_name}. "
-            f"Available: {', '.join(ENGINE_REGISTRY.keys())}"
+            f"Unknown engine: {engine_name}. Available: {', '.join(ENGINE_REGISTRY.keys())}"
         )
         return None
     try:
         return ENGINE_REGISTRY[engine_name]()
-    except (ImportError, SystemExit, Exception) as e:
+    except Exception as e:
         logger.warning(f"Engine '{engine_name}' failed to initialize: {e}")
         return None
 
@@ -594,24 +613,35 @@ def create_engine(engine_name: str) -> BaseOCREngine | None:
 # PDF Processing
 # ---------------------------------------------------------------------------
 
+
 def parse_pages(pages_str: str, total: int) -> set[int]:
     """Parse page spec like '5,10-15,55' into a set of 0-based page indices."""
     result = set()
     for part in pages_str.split(","):
         part = part.strip()
+        if not part:
+            continue
         if "-" in part:
             a, b = part.split("-", 1)
-            start = max(1, int(a))
-            end = min(total, int(b))
+            try:
+                start = max(1, int(a))
+                end = min(total, int(b))
+            except ValueError:
+                logger.warning(f"  Ignoring invalid page range: '{part}'")
+                continue
             result.update(range(start - 1, end))
         else:
-            idx = int(part) - 1
+            try:
+                idx = int(part) - 1
+            except ValueError:
+                logger.warning(f"  Ignoring invalid page spec: '{part}'")
+                continue
             if 0 <= idx < total:
                 result.add(idx)
     return result
 
 
-def _add_invisible_text(page, text: str) -> None:
+def _add_invisible_text(page: "fitz.Page", text: str) -> None:
     """Add invisible text layer to a PDF page for searchability."""
     import fitz
 
@@ -622,9 +652,9 @@ def _add_invisible_text(page, text: str) -> None:
     rc = page.insert_textbox(
         text_rect,
         text,
-        fontsize=3,
-        fontname="helv",
-        render_mode=3,  # invisible (neither fill nor stroke)
+        fontsize=INVISIBLE_TEXT_FONTSIZE,
+        fontname=INVISIBLE_TEXT_FONTNAME,
+        render_mode=INVISIBLE_TEXT_RENDER_MODE,
         overlay=True,
     )
     # If text didn't fit, retry with smaller font
@@ -633,9 +663,9 @@ def _add_invisible_text(page, text: str) -> None:
         page.insert_textbox(
             text_rect,
             text,
-            fontsize=1,
-            fontname="helv",
-            render_mode=3,
+            fontsize=INVISIBLE_TEXT_FONTSIZE_FALLBACK,
+            fontname=INVISIBLE_TEXT_FONTNAME,
+            render_mode=INVISIBLE_TEXT_RENDER_MODE,
             overlay=True,
         )
 
@@ -644,7 +674,7 @@ def process_pdf(
     input_path: Path,
     output_path: Path,
     engine: BaseOCREngine,
-    dpi: int = 300,
+    dpi: int = DEFAULT_DPI,
     pages: set[int] | None = None,
 ) -> bool:
     """Process a single PDF: add invisible OCR text layer to make it searchable.
@@ -698,7 +728,9 @@ def process_pdf(
         # In update mode, replace the page from the input first
         if update_mode:
             doc.delete_page(page_idx)
-            doc.insert_pdf(fitz.open(str(input_path)), from_page=page_idx, to_page=page_idx, start_at=page_idx)
+            doc.insert_pdf(
+                fitz.open(str(input_path)), from_page=page_idx, to_page=page_idx, start_at=page_idx
+            )
 
         page = doc[page_idx]
 
@@ -708,9 +740,7 @@ def process_pdf(
         img_data = pix.tobytes("png")
         image = Image.open(io.BytesIO(img_data)).convert("RGB")
 
-        logger.info(
-            f"  [{page_num}/{total_pages}] Running OCR ({engine.engine_name})..."
-        )
+        logger.info(f"  [{page_num}/{total_pages}] Running OCR ({engine.engine_name})...")
         try:
             text = engine.ocr_image(image)
         except Exception as e:
@@ -721,9 +751,7 @@ def process_pdf(
 
         if text.strip():
             _add_invisible_text(page, text)
-            logger.info(
-                f"  [{page_num}/{total_pages}] Text layer added ({len(text)} chars)"
-            )
+            logger.info(f"  [{page_num}/{total_pages}] Text layer added ({len(text)} chars)")
         else:
             logger.info(f"  [{page_num}/{total_pages}] No text detected, skipping.")
 
@@ -746,7 +774,8 @@ def process_pdf(
 # CLI
 # ---------------------------------------------------------------------------
 
-def main():
+
+def main() -> None:
     parser = argparse.ArgumentParser(
         description="Make scanned PDFs searchable using open-weight OCR models.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -791,7 +820,7 @@ Examples:
     parser.add_argument(
         "--dpi",
         type=int,
-        default=300,
+        default=DEFAULT_DPI,
         help="DPI for page rendering (higher = better OCR, more memory) (default: 300)",
     )
     parser.add_argument(
@@ -853,9 +882,9 @@ Examples:
     total_success = 0
 
     for engine_key in engine_keys:
-        logger.info(f"\n{'='*60}")
+        logger.info(f"\n{'=' * 60}")
         logger.info(f"Initializing engine: {engine_key}")
-        logger.info(f"{'='*60}")
+        logger.info(f"{'=' * 60}")
 
         if args.server:
             # Remote mode: use vLLM API
@@ -868,9 +897,7 @@ Examples:
             # Local mode: load model locally
             engine = create_engine(engine_key)
             if engine is None:
-                logger.warning(
-                    f"Skipping engine '{engine_key}' (failed to initialize)."
-                )
+                logger.warning(f"Skipping engine '{engine_key}' (failed to initialize).")
                 continue
 
         for pdf_file in pdf_files:
@@ -887,9 +914,7 @@ Examples:
                 target_pages = parse_pages(args.pages, len(_tmp))
                 _tmp.close()
 
-            if process_pdf(
-                pdf_file, output_file, engine, dpi=args.dpi, pages=target_pages
-            ):
+            if process_pdf(pdf_file, output_file, engine, dpi=args.dpi, pages=target_pages):
                 total_success += 1
 
         # Free engine memory before loading the next one

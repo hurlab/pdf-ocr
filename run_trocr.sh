@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 # Run TrOCR (local CPU) on all input PDFs.
 # Output: output/<filename>_trocr.pdf
 

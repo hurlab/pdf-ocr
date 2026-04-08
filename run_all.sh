@@ -1,8 +1,20 @@
 #!/bin/bash
+set -e
 # Run OCR on all input PDFs using all remote vLLM engines.
 # Output: output/<filename>_paddleocr.pdf, output/<filename>_hunyuan.pdf, etc.
 
 SERVER_URL="http://${OCR_SERVER_HOST:-YOUR_SERVER_IP}"
+
+if [[ "$SERVER_URL" == *"YOUR_SERVER_IP"* ]]; then
+  # Try reading from server/.server_ip
+  if [ -f "server/.server_ip" ]; then
+    SERVER_URL="http://$(cat server/.server_ip)"
+  else
+    echo "ERROR: Set OCR_SERVER_HOST or create server/.server_ip"
+    echo "  export OCR_SERVER_HOST=192.168.1.100"
+    exit 1
+  fi
+fi
 DPI=300
 INPUT="input"
 OUTPUT="output"

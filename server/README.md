@@ -72,3 +72,12 @@ Set `OCR_SERVER_HOST` to override the server IP:
 export OCR_SERVER_HOST=192.168.1.100
 ./setup_ocr.sh   # will default to this IP
 ```
+
+## Security
+
+These servers are designed for **private network / VPN use only**. They have:
+- No authentication (any client with network access can submit requests)
+- No request size limits
+- No rate limiting
+
+Do **not** expose these ports to the public internet. Run behind a VPN (e.g., Tailscale, WireGuard) or firewall.

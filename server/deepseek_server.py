@@ -6,23 +6,27 @@ Runs in the 'ocr-deepseek' conda environment on port 8003.
 
 import base64
 import io
+import logging
 import os
+import tempfile
 import time
 import uuid
 
 import torch
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from PIL import Image
 from pydantic import BaseModel
 from transformers import AutoModel, AutoTokenizer
+
+logger = logging.getLogger(__name__)
 
 MODEL_NAME = "deepseek-ai/DeepSeek-OCR-2"
 
 app = FastAPI(title="DeepSeek-OCR-2 Server")
 
 # Load model at startup
-print(f"Loading {MODEL_NAME}...")
+logger.info("Loading %s...", MODEL_NAME)
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, trust_remote_code=True)
 model = AutoModel.from_pretrained(
     MODEL_NAME,
@@ -31,10 +35,11 @@ model = AutoModel.from_pretrained(
     device_map="cuda",
 )
 model = model.eval()
-print(f"{MODEL_NAME} loaded on {next(model.parameters()).device}")
+logger.info("%s loaded on %s", MODEL_NAME, next(model.parameters()).device)
 
 
 # --- OpenAI-compatible API models ---
+
 
 class ChatMessage(BaseModel):
     role: str
@@ -64,6 +69,7 @@ class ModelInfo(BaseModel):
 
 
 # --- Endpoints ---
+
 
 @app.get("/v1/models")
 def list_models():
@@ -99,30 +105,41 @@ def chat_completions(request: ChatCompletionRequest):
                         if url.startswith("data:"):
                             # base64 encoded image
                             header, b64data = url.split(",", 1)
-                            image = Image.open(
-                                io.BytesIO(base64.b64decode(b64data))
-                            ).convert("RGB")
+                            image = Image.open(io.BytesIO(base64.b64decode(b64data))).convert("RGB")
 
     if image is None:
         return {"error": "No image provided in the request"}
 
     # Save temp image for model.infer()
-    tmp_path = f"/tmp/deepseek_ocr_{uuid.uuid4().hex}.png"
-    image.save(tmp_path)
+    tmp_fd, tmp_path = tempfile.mkstemp(suffix=".png", prefix="deepseek_ocr_")
+    os.close(tmp_fd)
+    output_dir = tempfile.mkdtemp(prefix="deepseek_ocr_out_")
+    try:
+        image.save(tmp_path)
+        try:
+            result = model.infer(
+                tokenizer,
+                prompt=f"<image>\n{prompt_text}",
+                image_file=tmp_path,
+                output_path=output_dir,
+                base_size=1024,
+                image_size=640,
+                crop_mode=True,
+                save_results=False,
+                eval_mode=True,
+            )
+        except Exception as e:
+            logger.error("Model inference failed: %s", e, exc_info=True)
+            raise HTTPException(
+                status_code=500, detail="Model inference failed. Check server logs for details."
+            )
+    finally:
+        if os.path.exists(tmp_path):
+            os.unlink(tmp_path)
+        if os.path.isdir(output_dir):
+            import shutil
 
-    result = model.infer(
-        tokenizer,
-        prompt=f"<image>\n{prompt_text}",
-        image_file=tmp_path,
-        output_path="/tmp/deepseek_ocr_out",
-        base_size=1024,
-        image_size=640,
-        crop_mode=True,
-        save_results=False,
-        eval_mode=True,
-    )
-
-    os.unlink(tmp_path)
+            shutil.rmtree(output_dir, ignore_errors=True)
 
     return {
         "id": f"chatcmpl-{uuid.uuid4().hex[:12]}",
